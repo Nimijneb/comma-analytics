@@ -1,0 +1,13 @@
+# Copy to docker-compose.override.yml (not tracked) for host-specific mounts. Example: an install whose comma/Home
+# Assistant tokens live in an older auth.json and whose device SSH key is the user's own.
+# (Mount them under /config: files can't be mounted inside /secrets, which is itself a read-only mount.)
+services:
+  sync:
+    environment:
+      AUTH_FILE: /config/auth.json      # COMMA_TOKEN / HA_TOKEN fall back to access_token / ha_token in this file
+      SSH_KEY: /config/comma_ssh_key
+    volumes:
+      - ~/.comma/auth.json:/config/auth.json:ro
+      - ~/.ssh/id_ed25519:/config/comma_ssh_key:ro
+    extra_hosts:
+      - host.docker.internal:host-gateway   # so HA_URL=http://host.docker.internal:8123 reaches Home Assistant on this host

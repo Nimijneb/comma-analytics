@@ -1,0 +1,58 @@
+# Run ./setup.py first: it writes .env (tokens, passwords, options). Then: docker compose up -d --build
+services:
+  influxdb:
+    image: influxdb:2
+    restart: unless-stopped
+    environment:
+      # first start only: creates the org, bucket and admin token (changing them later has no effect)
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_PASSWORD:?run ./setup.py first}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUX_ORG:-comma}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUX_BUCKET:-comma}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_TOKEN:?run ./setup.py first}
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+      - influxdb-config:/etc/influxdb2
+    # ports: ["8086:8086"]   # uncomment to reach the InfluxDB UI (login admin / INFLUX_PASSWORD)
+
+  grafana:
+    image: grafana/grafana:${GRAFANA_VERSION:-13.2.1}
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?run ./setup.py first}
+      GF_DATE_FORMATS_DEFAULT_TIMEZONE: ${TZ_NAME:-browser}
+      # GRAFANA_ANONYMOUS=true lets anyone who can reach the port view (not edit) the dashboard
+      GF_AUTH_ANONYMOUS_ENABLED: ${GRAFANA_ANONYMOUS:-false}
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      # lets the drive's "Copy" button work (HTML in text panels, which only editors can change)
+      GF_PANELS_DISABLE_SANITIZE_HTML: "true"
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+  sync:
+    build:
+      context: .
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+    image: comma-analytics:local
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      INFLUX_URL: http://influxdb:8086
+      GRAFANA_URL: http://grafana:3000
+      GRAFANA_INFLUX_URL: http://influxdb:8086
+      GRAFANA_PUBLIC_URL: http://localhost:${GRAFANA_PORT:-3000}
+      TZ: ${TZ_NAME:-UTC}
+    volumes:
+      - ${ARCHIVE_PATH:-./archive}:/app/archive   # raw drive logs: the permanent copy (comma's cloud only keeps a few days)
+      - ./secrets:/secrets:ro    # comma_ssh_key, if the LAN device pull is on
+    depends_on: [influxdb]   # not grafana: it may be an existing one outside this stack (setup waits for it either way)
+
+volumes:
+  influxdb-data:
+  influxdb-config:
+  grafana-data:

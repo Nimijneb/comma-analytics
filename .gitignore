@@ -1,0 +1,9 @@
+.env
+docker-compose.override.yml
+archive/
+secrets/
+.venv/
+__pycache__/
+*.swp
+*.swo
+*~

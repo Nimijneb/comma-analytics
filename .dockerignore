@@ -1,0 +1,6 @@
+.env
+.git
+.venv
+archive
+secrets
+**/__pycache__

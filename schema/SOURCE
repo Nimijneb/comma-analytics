@@ -1,0 +1,8 @@
+Copied from Adventure Pilot (https://github.com/adventurepilotdev/openpilot) at commit 69cf6b5a0, a fork of openpilot:
+
+- *.capnp, include/c++.capnp: openpilot's cereal message schema (https://github.com/commaai/openpilot);
+  custom.capnp holds the forks' additions. MIT License, Copyright (c) 2018, Comma.ai, Inc.
+- rivian_primary_actuator.dbc: from opendbc (https://github.com/commaai/opendbc).
+  MIT License, Copyright (c) 2020, Comma.ai, Inc.
+
+The full license texts are in those repositories.

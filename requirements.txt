@@ -1,0 +1,5 @@
+influxdb-client==1.50.0
+pycapnp==2.2.4
+requests==2.34.2
+zstandard==0.25.0
+cantools==44.1.0
